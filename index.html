@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <!-- iOS PWA Settings (Για να τρέχει ΣΑΝ ΕΦΑΡΜΟΓΗ και όχι σαν σελίδα) -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="CarsCatalogue">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <title>Stavros Xanthopoulos - CarsCatalogue</title>
+
+    <!-- Tailwind CSS & FontAwesome -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        body { 
+            -webkit-tap-highlight-color: transparent; 
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(155, 155, 155, 0.4); border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex justify-center items-center p-0 sm:p-4 font-sans antialiased select-none">
+
+    <!-- App Container -->
+    <div class="w-full max-w-md bg-slate-800 min-h-screen sm:min-h-[844px] sm:rounded-3xl shadow-2xl flex flex-col justify-between overflow-hidden relative border border-slate-700/50">
+        
+        <!-- HEADER -->
+        <div class="bg-gradient-to-b from-slate-950 via-slate-900 to-slate-900 p-5 pt-10 border-b border-slate-800 shadow-md">
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex flex-col">
+                    <svg class="h-8 w-auto text-white fill-current" viewBox="0 0 450 60" xmlns="http://www.w3.org/2000/svg">
+                        <text x="0" y="42" font-family="'Brush Script MT', 'Comic Sans MS', cursive, sans-serif" font-size="42" font-weight="bold" font-style="italic" letter-spacing="1">Stavros Xanthopoulos</text>
+                    </svg>
+                    <span class="text-xs font-semibold tracking-wide text-red-500 mt-0.5 ml-1 flex items-center gap-1.5">
+                        <i class="fa-solid fa-car text-[10px]"></i> CarsCatalogue
+                    </span>
+                </div>
+
+                <span id="car-count-badge" class="bg-slate-800 text-red-400 font-bold text-xs px-3 py-1.5 rounded-full border border-slate-700/80 shadow-inner">
+                    0 Οχήματα
+                </span>
+            </div>
+            
+            <!-- Category Filter Tabs -->
+            <div class="flex space-x-1.5 mb-3 bg-slate-950/60 p-1 rounded-xl border border-slate-800/80">
+                <button type="button" onclick="setCategoryFilter('ALL')" id="tab-ALL" class="flex-1 py-1.5 rounded-lg text-xs font-semibold transition bg-red-600 text-white shadow">Όλα</button>
+                <button type="button" onclick="setCategoryFilter('Αυτοκίνητο')" id="tab-Αυτοκίνητο" class="flex-1 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition">🚗 Ι.Χ.</button>
+                <button type="button" onclick="setCategoryFilter('Λεωφορείο')" id="tab-Λεωφορείο" class="flex-1 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition">🚌 Λεωφ.</button>
+                <button type="button" onclick="setCategoryFilter('Φορτηγό')" id="tab-Φορτηγό" class="flex-1 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition">🚚 Φορτ.</button>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="relative">
+                <input type="text" id="search-input" oninput="renderVehicleList()" placeholder="Αναζήτηση μάρκας, μοντέλου..." 
+                       class="w-full bg-slate-950/80 text-slate-100 placeholder-slate-500 pl-10 pr-4 py-2.5 rounded-xl text-xs border border-slate-800 focus:outline-none focus:border-red-500 transition">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-500 text-xs"></i>
+            </div>
+        </div>
+
+        <!-- Vehicle List Area -->
+        <div class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar" id="vehicle-list-container"></div>
+
+        <!-- Bottom Action Bar -->
+        <div class="p-4 pb-8 bg-slate-900 border-t border-slate-800 flex justify-between items-center shadow-lg">
+            <div class="text-[11px] text-slate-400 font-medium flex items-center">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></span>
+                <span>iOS Ready</span>
+            </div>
+            <button type="button" id="open-modal-btn" class="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-lg shadow-red-900/30 flex items-center space-x-2 transition active:scale-95">
+                <i class="fa-solid fa-plus text-sm"></i>
+                <span>Προσθήκη Οχήματος</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal Form -->
+    <div id="vehicle-modal" class="fixed inset-0 bg-black/75 backdrop-blur-sm hidden flex justify-center items-end sm:items-center p-0 sm:p-4 z-50">
+        <div class="bg-slate-900 w-full max-w-md rounded-t-3xl sm:rounded-2xl p-5 border border-slate-800 shadow-2xl max-h-[92vh] overflow-y-auto custom-scrollbar">
+            
+            <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-800">
+                <h2 id="modal-heading" class="text-base font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-red-500"></i> Νέο Όχημα
+                </h2>
+                <button type="button" id="close-modal-btn" class="text-slate-400 hover:text-white p-1 text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <form id="vehicle-form" class="space-y-3">
+                <input type="hidden" id="entry-id" value="">
+                
+                <div>
+                    <label class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Τύπος Οχήματος</label>
+                    <select id="vehicle-type" class="w-full bg-slate-950 border border-slate-800 text-slate-200 rounded-xl p-2.5 text-xs outline-none focus:border-red-500">
+                        <option value="Αυτοκίνητο">🚗 Αυτοκίνητο (Ι.Χ.)</option>
+                        <option value="Λεωφορείο">🚌 Λεωφορείο</option>
+                        <option value="Φορτηγό">🚚 Φορτηγό</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Μάρκα & Μοντέλο</label>
+                    <input type="text" id="vehicle-name" required placeholder="π.χ. Porsche 911 GT3" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-xl p-2.5 text-xs outline-none focus:border-red-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Έτος</label>
+                        <input type="number" id="vehicle-year" required placeholder="2022" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-xl p-2.5 text-xs outline-none focus:border-red-500">
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Ίπποι (HP)</label>
+                        <input type="number" id="vehicle-hp" required placeholder="510" class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-xl p-2.5 text-xs outline-none focus:border-red-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Φωτογραφία (Αρχείο)</label>
+                    <input type="file" id="photo-input-file" accept="image/*" class="w-full text-xs text-slate-400 bg-slate-950 border border-slate-800 rounded-xl p-2 focus:border-red-500 file:mr-3 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-red-600 file:text-white">
+                    
+                    <div class="relative flex py-2 items-center">
+                        <div class="flex-grow border-t border-slate-800"></div>
+                        <span class="flex-shrink mx-2 text-[10px] text-slate-500 font-medium">ή σύνδεσμος URL</span>
+                        <div class="flex-grow border-t border-slate-800"></div>
+                    </div>
+
+                    <input type="url" id="photo-input-url" placeholder="https://..." class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-xl p-2.5 text-xs outline-none focus:border-red-500">
+                    
+                    <div id="image-preview-wrapper" class="hidden mt-2 relative rounded-xl overflow-hidden border border-slate-700">
+                        <img id="image-preview-element" src="" class="w-full h-36 object-cover">
+                        <button type="button" id="clear-img-btn" class="absolute top-2 right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-lg hover:bg-red-700">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Σημειώσεις</label>
+                    <textarea id="vehicle-notes" rows="2" placeholder="Σημειώσεις..." class="w-full bg-slate-950 border border-slate-800 text-slate-100 rounded-xl p-2.5 text-xs outline-none focus:border-red-500"></textarea>
+                </div>
+
+                <div class="pt-3 flex space-x-2">
+                    <button type="button" id="cancel-modal-btn" class="w-1/2 py-2.5 border border-slate-800 rounded-xl text-xs font-bold text-slate-400 hover:bg-slate-800 transition">Ακύρωση</button>
+                    <button type="submit" class="w-1/2 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold shadow-lg shadow-red-900/40 transition">Αποθήκευση</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript logic -->
+    <script>
+        let vehicleCollection = JSON.parse(localStorage.getItem('my_garage_data_v2')) || [];
+        let activeBase64Photo = "";
+        let activeCategoryTab = "ALL";
+
+        function persistData() {
+            localStorage.setItem('my_garage_data_v2', JSON.stringify(vehicleCollection));
+        }
+
+        window.setCategoryFilter = function(cat) {
+            activeCategoryTab = cat;
+            ['ALL', 'Αυτοκίνητο', 'Λεωφορείο', 'Φορτηγό'].forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                if (btn) {
+                    if (t === cat) {
+                        btn.className = "flex-1 py-1.5 rounded-lg text-xs font-semibold transition bg-red-600 text-white shadow";
+                    } else {
+                        btn.className = "flex-1 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition";
+                    }
+                }
+            });
+            renderVehicleList();
+        }
+
+        function getCategoryIcon(type) {
+            if (type === 'Λεωφορείο') return '<i class="fa-solid fa-bus text-blue-400"></i>';
+            if (type === 'Φορτηγό') return '<i class="fa-solid fa-truck text-amber-400"></i>';
+            return '<i class="fa-solid fa-car text-red-500"></i>';
+        }
+
+        document.getElementById('photo-input-file').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    const maxDim = 800;
+
+                    if (width > height && width > maxDim) {
+                        height = Math.round((height * maxDim) / width);
+                        width = maxDim;
+                    } else if (height > maxDim) {
+                        width = Math.round((width * maxDim) / height);
+                        height = maxDim;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    activeBase64Photo = canvas.toDataURL('image/jpeg', 0.75);
+                    document.getElementById('image-preview-element').src = activeBase64Photo;
+                    document.getElementById('image-preview-wrapper').classList.remove('hidden');
+                    document.getElementById('photo-input-url').value = '';
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        document.getElementById('clear-img-btn').addEventListener('click', function() {
+            activeBase64Photo = "";
+            document.getElementById('photo-input-file').value = "";
+            document.getElementById('photo-input-url').value = "";
+            document.getElementById('image-preview-wrapper').classList.add('hidden');
+        });
+
+        window.renderVehicleList = function() {
+            const container = document.getElementById('vehicle-list-container');
+            const searchInput = document.getElementById('search-input');
+            const searchKeyword = searchInput ? searchInput.value.toLowerCase() : '';
+            
+            const badge = document.getElementById('car-count-badge');
+            if (badge) badge.innerText = `${vehicleCollection.length} Οχήματα`;
+            if (!container) return;
+            
+            container.innerHTML = '';
+
+            const filtered = vehicleCollection.filter(item => {
+                const matchesCategory = activeCategoryTab === 'ALL' || item.type === activeCategoryTab;
+                const matchesSearch = item.name.toLowerCase().includes(searchKeyword) || 
+                                      (item.notes && item.notes.toLowerCase().includes(searchKeyword));
+                return matchesCategory && matchesSearch;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-slate-500 py-16">
+                        <i class="fa-solid fa-folder-open text-5xl mb-3 text-slate-700"></i>
+                        <p class="text-sm font-semibold text-slate-400">Δεν βρέθηκαν οχήματα</p>
+                        <p class="text-xs text-slate-600 mt-1">Πατήστε "+ Προσθήκη Οχήματος" για εισαγωγή.</p>
+                    </div>`;
+                return;
+            }
+
+            filtered.forEach(item => {
+                const photoSrc = item.photo || '';
+                const iconHtml = getCategoryIcon(item.type);
+
+                container.innerHTML += `
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-lg hover:border-slate-700 transition group">
+                        ${photoSrc ? `<div class="h-44 overflow-hidden bg-slate-950 relative"><img src="${photoSrc}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" alt="${item.name}"></div>` : ''}
+                        <div class="p-4">
+                            <div class="flex justify-between items-start mb-1">
+                                <div>
+                                    <span class="text-[11px] font-semibold text-slate-400 flex items-center gap-1.5 mb-1">
+                                        ${iconHtml} ${item.type || 'Αυτοκίνητο'}
+                                    </span>
+                                    <h3 class="font-bold text-white text-base leading-snug">${item.name}</h3>
+                                </div>
+                                <span class="bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-black px-2.5 py-1 rounded-lg">
+                                    ${item.hp} HP
+                                </span>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-1"><i class="fa-regular fa-calendar-check mr-1"></i> Έτος: ${item.year}</p>
+                            
+                            ${item.notes && item.notes.trim() !== '' ? `
+                                <div class="mt-3 bg-slate-950/70 p-2.5 rounded-xl border border-slate-800 text-xs text-slate-300 italic">
+                                    "${item.notes}"
+                                </div>
+                            ` : ''}
+                            
+                            <div class="mt-4 pt-3 border-t border-slate-800/80 flex justify-end space-x-3">
+                                <button type="button" onclick="openEditModal(${item.id})" class="text-xs text-sky-400 hover:text-sky-300 font-semibold flex items-center gap-1">
+                                    <i class="fa-solid fa-pen"></i> Επεξεργασία
+                                </button>
+                                <button type="button" onclick="deleteVehicle(${item.id})" class="text-xs text-red-400 hover:text-red-300 font-semibold flex items-center gap-1">
+                                    <i class="fa-solid fa-trash"></i> Διαγραφή
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        const modal = document.getElementById('vehicle-modal');
+
+        document.getElementById('open-modal-btn').addEventListener('click', function() {
+            document.getElementById('modal-heading').innerHTML = '<i class="fa-solid fa-plus text-red-500"></i> Νέο Όχημα';
+            document.getElementById('entry-id').value = '';
+            document.getElementById('vehicle-form').reset();
+            activeBase64Photo = "";
+            document.getElementById('image-preview-wrapper').classList.add('hidden');
+            modal.classList.remove('hidden');
+        });
+
+        document.getElementById('close-modal-btn').addEventListener('click', closeModal);
+        document.getElementById('cancel-modal-btn').addEventListener('click', closeModal);
+
+        function closeModal() {
+            modal.classList.add('hidden');
+        }
+
+        window.openEditModal = function(id) {
+            const item = vehicleCollection.find(v => v.id === id);
+            if (!item) return;
+
+            document.getElementById('modal-heading').innerHTML = '<i class="fa-solid fa-pen-to-square text-red-500"></i> Επεξεργασία Οχήματος';
+            document.getElementById('entry-id').value = item.id;
+            document.getElementById('vehicle-type').value = item.type || 'Αυτοκίνητο';
+            document.getElementById('vehicle-name').value = item.name;
+            document.getElementById('vehicle-year').value = item.year;
+            document.getElementById('vehicle-hp').value = item.hp;
+            document.getElementById('vehicle-notes').value = item.notes || '';
+
+            activeBase64Photo = "";
+            document.getElementById('image-preview-wrapper').classList.add('hidden');
+            document.getElementById('photo-input-url').value = '';
+
+            if (item.photo) {
+                if (item.photo.startsWith('data:image')) {
+                    activeBase64Photo = item.photo;
+                    document.getElementById('image-preview-element').src = activeBase64Photo;
+                    document.getElementById('image-preview-wrapper').classList.remove('hidden');
+                } else {
+                    document.getElementById('photo-input-url').value = item.photo;
+                }
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        document.getElementById('vehicle-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const editId = document.getElementById('entry-id').value;
+            const photoUrlInput = document.getElementById('photo-input-url').value;
+            const finalPhoto = activeBase64Photo || photoUrlInput;
+
+            const payload = {
+                type: document.getElementById('vehicle-type').value,
+                name: document.getElementById('vehicle-name').value,
+                year: document.getElementById('vehicle-year').value,
+                hp: document.getElementById('vehicle-hp').value,
+                photo: finalPhoto,
+                notes: document.getElementById('vehicle-notes').value
+            };
+
+            if (editId) {
+                const idx = vehicleCollection.findIndex(v => v.id == editId);
+                if (idx !== -1) {
+                    vehicleCollection[idx] = { id: Number(editId), ...payload };
+                }
+            } else {
+                vehicleCollection.unshift({ id: Date.now(), ...payload });
+            }
+
+            persistData();
+            renderVehicleList();
+            closeModal();
+        });
+
+        window.deleteVehicle = function(id) {
+            if (confirm('Θέλετε να διαγράψετε αυτό το όχημα από τη συλλογή;')) {
+                vehicleCollection = vehicleCollection.filter(v => v.id !== id);
+                persistData();
+                renderVehicleList();
+            }
+        }
+
+        renderVehicleList();
+    </script>
+</body>
+</html>
